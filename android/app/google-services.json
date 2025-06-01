@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "374303258798",
+    "project_id": "focuszone-568cc",
+    "storage_bucket": "focuszone-568cc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:374303258798:android:fdff63af7551d192a3953f",
+        "android_client_info": {
+          "package_name": "com.focuszone"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_YQQGrleSkuVeKP79JTN0vSNTobmbHug"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
