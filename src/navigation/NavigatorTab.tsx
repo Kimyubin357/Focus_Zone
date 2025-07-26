@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import HomeScreen from '../screens/main/HomeScreen';
+import MainStack from './MainStack'; // ✅ 여기서 HomeScreen을 대신함
 import StatsScreen from '../screens/main/StatsScreen';
 import GroupScreen from '../screens/main/GroupScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
@@ -15,7 +15,7 @@ export default function NavigatorTab() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: string = '';
+          let iconName = '';
 
           if (route.name === 'Home') {
             iconName = focused ? 'location' : 'location-outline';
@@ -34,7 +34,8 @@ export default function NavigatorTab() {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: '집중장소' }} />
+      {/* ✅ Home 탭은 이제 MainStack만 포함 */}
+      <Tab.Screen name="Home" component={MainStack} options={{ title: '집중장소' }} />
       <Tab.Screen name="Stats" component={StatsScreen} options={{ title: '통계' }} />
       <Tab.Screen name="Group" component={GroupScreen} options={{ title: '그룹장소' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: '프로필' }} />

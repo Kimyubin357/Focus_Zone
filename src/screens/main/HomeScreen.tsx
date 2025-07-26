@@ -1,17 +1,14 @@
 // HomeScreen.tsx
 import React, { useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Animated,
-  PanResponder,
-  Dimensions,
+  View, Text, StyleSheet, FlatList, TouchableOpacity, Animated, PanResponder, Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MapView, { Marker } from 'react-native-maps';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { MainStackParamList } from '../../navigation/MainStack'; // 경로 확인
+import { useSharedValue } from 'react-native-reanimated';
 
 const screenHeight = Dimensions.get('window').height;
 const initialLocations = [
@@ -34,31 +31,43 @@ const initialLocations = [
 ];
 
 export default function HomeScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const [focusLocations, setFocusLocations] = useState(initialLocations);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const sheetHeight = useRef(new Animated.Value(screenHeight * 0.6)).current;
   const collapsedHeight = 60;
+  const middleHeight = screenHeight * 0.6;
   const expandedHeight = screenHeight * 0.88;
   const isExpanded = useRef(false);
+
+  let currentHeight = middleHeight;
+
+  sheetHeight.addListener(({ value }) => {
+    currentHeight = value;
+  });
 
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 10,
       onPanResponderMove: (_, gestureState) => {
-        let newHeight = isExpanded.current
-          ? expandedHeight - gestureState.dy
-          : collapsedHeight - gestureState.dy;
-        newHeight = Math.max(collapsedHeight, Math.min(expandedHeight, newHeight));
-        sheetHeight.setValue(newHeight);
+        const newHeight = currentHeight - gestureState.dy;
+        sheetHeight.setValue(
+          Math.max(collapsedHeight, Math.min(expandedHeight, newHeight))
+        );
       },
       onPanResponderRelease: (_, gestureState) => {
-        const shouldExpand = gestureState.dy < -50;
+        const releasedHeight = currentHeight - gestureState.dy;
+
+        const nearest = [collapsedHeight, middleHeight, expandedHeight].reduce((prev, curr) =>
+          Math.abs(curr - releasedHeight) < Math.abs(prev - releasedHeight) ? curr : prev
+        );
+
         Animated.timing(sheetHeight, {
-          toValue: shouldExpand ? expandedHeight : collapsedHeight,
+          toValue: nearest,
           duration: 200,
           useNativeDriver: false,
         }).start(() => {
-          isExpanded.current = shouldExpand;
+          isExpanded.current = nearest === expandedHeight;
         });
       },
     })
@@ -72,6 +81,10 @@ export default function HomeScreen() {
 
   const toggleMenu = (id: string) => {
     setMenuOpenId(menuOpenId === id ? null : id);
+  };
+
+  const handlePresentModalPress = () => {
+    navigation.navigate('AddFocusZone');
   };
 
   const renderItem = ({ item }: any) => (
@@ -153,7 +166,7 @@ export default function HomeScreen() {
         />
       </Animated.View>
 
-      <TouchableOpacity style={styles.addButton}>
+      <TouchableOpacity style={styles.addButton} onPress={handlePresentModalPress}>
         <Icon name="add" size={28} color="#fff" />
       </TouchableOpacity>
     </View>
