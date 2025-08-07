@@ -181,7 +181,7 @@ export default function HomeScreen() {
               <meta name="viewport" content="width=device-width, initial-scale=1.0" />
               <title>Kakao Map</title>
               <style>html,body,#map{height:100%;margin:0;padding:0;}</style>
-              <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=f0bd2f3644baa4e63b88a544b691600d"></script>
+              <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey="></script>
             </head>
             <body>
               <div id="map" style="width:100vw;height:100vh;"></div>
