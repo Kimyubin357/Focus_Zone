@@ -7,7 +7,7 @@ import SetLocation from '../screens/main/addFocusZone/SetLocation';
 import SetBlockApp from '../screens/main/addFocusZone/SetBlockApp';
 
 export type MainStackParamList = {
-  Home: undefined;
+  HomeScreen: undefined;
   AddFocusZone: undefined;
   SetLocation: undefined;
   SetBlockApp: undefined;
@@ -19,7 +19,7 @@ export default function MainStack() {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="Home"
+        name="HomeScreen"
         component={HomeScreen}
         options={{ headerShown: false }}
       />

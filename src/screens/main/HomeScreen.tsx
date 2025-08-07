@@ -1,14 +1,12 @@
-// HomeScreen.tsx
-import React, { useRef, useState } from 'react';
-import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity, Animated, PanResponder, Dimensions,
-} from 'react-native';
+import Geolocation from '@react-native-community/geolocation';
 import Icon from 'react-native-vector-icons/Ionicons';
-import MapView, { Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MainStackParamList } from '../../navigation/MainStack'; // 경로 확인
+import { MainStackParamList } from '../../navigation/MainStack';
 import { useSharedValue } from 'react-native-reanimated';
+import React, { useRef, useState } from 'react';
+import { Platform, PermissionsAndroid, View, Text, StyleSheet, FlatList, TouchableOpacity, Animated, PanResponder, Dimensions } from 'react-native';
+import { WebView } from 'react-native-webview';
 
 const screenHeight = Dimensions.get('window').height;
 const initialLocations = [
@@ -31,6 +29,47 @@ const initialLocations = [
 ];
 
 export default function HomeScreen() {
+  // WebView ref for controlling the map
+  const webViewRef = useRef<any>(null);
+
+  // 내 위치로 이동 버튼 핸들러
+  const handleMoveToMyLocation = async () => {
+  console.log('내 위치 버튼 클릭됨');
+  let location = null;
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: '위치 권한 요청',
+          message: '내 위치로 이동하려면 위치 권한이 필요합니다.',
+          buttonNeutral: '나중에',
+          buttonNegative: '거부',
+          buttonPositive: '허용',
+        },
+      );
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+        return;
+      }
+    }
+    Geolocation.getCurrentPosition(
+      (position: any) => {
+        location = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+        console.log('내 위치 위도/경도:', location.latitude, location.longitude);
+        if (webViewRef.current) {
+          webViewRef.current.postMessage(
+            JSON.stringify({ type: 'moveToMyLocation', ...location })
+          );
+        }
+      },
+      (error: any) => {
+        console.log('위치 정보 에러:', error);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 1000 },
+    );
+  };
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const [focusLocations, setFocusLocations] = useState(initialLocations);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
@@ -127,30 +166,82 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: 36.6282,
-          longitude: 127.4563,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
+      <WebView
+        ref={webViewRef}
+        style={{ flex: 1 }}
+        originWhitelist={["*"]}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        source={{
+          html: `
+            <!DOCTYPE html>
+            <html lang="ko">
+            <head>
+              <meta charset="utf-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>Kakao Map</title>
+              <style>html,body,#map{height:100%;margin:0;padding:0;}</style>
+              <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=f0bd2f3644baa4e63b88a544b691600d"></script>
+            </head>
+            <body>
+              <div id="map" style="width:100vw;height:100vh;"></div>
+              <button id="moveMyLocationBtn" style="display:none">내 위치로 이동</button>
+              <script>
+                var mapContainer = document.getElementById('map');
+                var mapOption = {
+                  center: new kakao.maps.LatLng(36.6282, 127.4563),
+                  level: 3
+                };
+                var map = new kakao.maps.Map(mapContainer, mapOption);
+                var positions = [
+                  { title: '도서관', latlng: new kakao.maps.LatLng(36.6282, 127.4563) },
+                  { title: '스터디카페', latlng: new kakao.maps.LatLng(36.6255, 127.4532) }
+                ];
+                positions.forEach(function(pos) {
+                  new kakao.maps.Marker({
+                    map: map,
+                    position: pos.latlng,
+                    title: pos.title
+                  });
+                });
+                document.addEventListener('message', function(e) {
+                  try {
+                    var data = JSON.parse(e.data);
+                    if (data.type === 'moveToMyLocation' && data.latitude && data.longitude) {
+                      var latlng = new kakao.maps.LatLng(data.latitude, data.longitude);
+                      map.setCenter(latlng);
+                      new kakao.maps.Marker({
+                        map: map,
+                        position: latlng,
+                        title: '내 위치'
+                      });
+                    }
+                  } catch (err) {}
+                });
+              </script>
+            </body>
+            </html>
+          `
         }}
-        region={{
-          latitude: 36.6282,
-          longitude: 127.4563,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
+      />
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          top: 32,
+          right: 16,
+          backgroundColor: '#fff',
+          borderRadius: 24,
+          width: 48,
+          height: 48,
+          alignItems: 'center',
+          justifyContent: 'center',
+          elevation: 4,
+          zIndex: 1000,
         }}
+        onPress={handleMoveToMyLocation}
       >
-        {focusLocations.map((loc) => (
-          <Marker
-            key={loc.id}
-            coordinate={loc.coordinate}
-            title={loc.name}
-            description={loc.address}
-          />
-        ))}
-      </MapView>
+        <Icon name="locate" size={28} color="#339AF0" />
+      </TouchableOpacity>
 
       <Animated.View
         style={[styles.listContainer, { height: sheetHeight }]}
