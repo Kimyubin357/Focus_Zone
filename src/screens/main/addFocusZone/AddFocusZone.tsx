@@ -1,13 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MainStackParamList } from '../../../navigation/MainStack'; // 주의: MainStack에 두 화면 등록 필요
+import { MainStackParamList } from '../../../navigation/MainStack';
 
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export default function AddFocusZone() {
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
+  const route = useRoute();
+  // 전달된 주소/좌표 받기
+  // @ts-ignore
+  const address = route.params?.address;
 
   return (
     <View style={styles.container}>
@@ -34,7 +38,7 @@ export default function AddFocusZone() {
         <Text style={styles.label}>위치</Text>
         <View style={styles.inputBox}>
           <Ionicons name="send" size={16} color="#339AF0" />
-          <Text style={styles.inputText}>51-1, 충대로13번길, 청주시</Text>
+          <Text style={styles.inputText}>{address ? address : '51-1, 충대로13번길, 청주시'}</Text>
         </View>
       </TouchableOpacity>
 

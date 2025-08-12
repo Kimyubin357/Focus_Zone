@@ -1,22 +1,24 @@
 // SetLocation.tsx
 
 import React, { useState, useRef } from 'react';
-import { View, StyleSheet, Dimensions, Text, TouchableOpacity, Platform, PermissionsAndroid } from 'react-native';
+import { View, StyleSheet, Dimensions, Text, TouchableOpacity, Platform, PermissionsAndroid, ActivityIndicator, Alert } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
+import { WebView } from 'react-native-webview';
+import { useNavigation } from '@react-navigation/native';
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   webview: { flex: 1, width: Dimensions.get('window').width, height: Dimensions.get('window').height },
 });
 
-import { WebView } from 'react-native-webview';
-
 export default function SetLocation() {
-
-
+  const navigation = useNavigation();
   const [error, setError] = useState<string | null>(null);
   const [log, setLog] = useState<string | null>(null);
   const webViewRef = useRef<any>(null);
+  const [selected, setSelected] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
+  const [loadingAddr, setLoadingAddr] = useState(false);
 
   // 내 위치로 이동 버튼 핸들러
   const handleMoveToMyLocation = async () => {
@@ -107,6 +109,7 @@ export default function SetLocation() {
     </body>
     </html>
   `;
+
   return (
     <View style={styles.container}>
       {error && (
@@ -128,7 +131,33 @@ export default function SetLocation() {
           setError(nativeEvent.description || 'Unknown error');
         }}
         onLoadEnd={() => setLog('WebView loaded')}
-        onMessage={event => setLog('onMessage: ' + event.nativeEvent.data)}
+        onMessage={async event => {
+          setLog('onMessage: ' + event.nativeEvent.data);
+          try {
+            const data = JSON.parse(event.nativeEvent.data);
+            if (data.latitude && data.longitude) {
+              setSelected({ latitude: data.latitude, longitude: data.longitude });
+              setAddress(null);
+              setLoadingAddr(true);
+              // 카카오 REST API로 reverse geocoding
+              const REST_API_KEY = '';
+              const url = `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${data.longitude}&y=${data.latitude}`;
+              const res = await fetch(url, {
+                headers: { Authorization: `KakaoAK ${REST_API_KEY}` },
+              });
+              const json = await res.json();
+              if (json.documents && json.documents.length > 0) {
+                setAddress(json.documents[0].address?.address_name || '');
+              } else {
+                setAddress('주소를 찾을 수 없습니다');
+              }
+              setLoadingAddr(false);
+            }
+          } catch (e) {
+            setAddress('주소 변환 실패');
+            setLoadingAddr(false);
+          }
+        }}
       />
       <TouchableOpacity
         style={{
@@ -148,6 +177,34 @@ export default function SetLocation() {
       >
         <Text style={{ color: '#339AF0', fontWeight: 'bold', fontSize: 18 }}>내위치</Text>
       </TouchableOpacity>
+
+      {/* 주소 및 계속하기 버튼 */}
+      {selected && (
+        <View style={{ position: 'absolute', bottom: 32, left: 0, right: 0, alignItems: 'center' }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, elevation: 2 }}>
+            {loadingAddr ? (
+              <ActivityIndicator size="small" color="#339AF0" />
+            ) : (
+              <Text style={{ fontSize: 16, color: '#222' }}>{address || '주소를 불러오는 중...'}</Text>
+            )}
+          </View>
+          <TouchableOpacity
+            style={{ backgroundColor: '#339AF0', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 32 }}
+            disabled={!address || loadingAddr}
+            onPress={() => {
+              if (!address) return;
+              // 이전 화면으로 주소/좌표 전달 (params로 전달)
+              navigation.navigate({
+                name: 'AddFocusZone',
+                params: { address, latitude: selected.latitude, longitude: selected.longitude },
+                merge: true,
+              });
+            }}
+          >
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>계속하기</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
