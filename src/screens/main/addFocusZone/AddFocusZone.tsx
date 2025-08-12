@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../../navigation/MainStack'; // 주의: MainStack에 두 화면 등록 필요
+
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export default function AddFocusZone() {
@@ -49,7 +50,7 @@ export default function AddFocusZone() {
     </View>
   );
 }
-
+// ...중복된 styles 선언 제거...
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#F3F6FD' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
@@ -58,6 +59,7 @@ const styles = StyleSheet.create({
   save: { color: '#228be6', fontWeight: 'bold' },
   mapPlaceholder: { height: 100, backgroundColor: '#ddd', borderRadius: 8, marginBottom: 12 },
   section: { marginVertical: 8 },
+  // ...기존 스타일 유지...
   label: { fontSize: 14, color: '#888', marginBottom: 4 },
   inputBox: {
     flexDirection: 'row',
